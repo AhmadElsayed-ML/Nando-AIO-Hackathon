@@ -1,5 +1,5 @@
 # demo.py
-from sample_data import BAD_BRAND_CONTENT
+from Data.sample_data import BAD_BRAND_CONTENT
 from Modules.content_analyzer import analyze_content_rule_based
 from Modules.ai_optimizer import optimize_content_rule_based
 

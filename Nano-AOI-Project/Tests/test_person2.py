@@ -3,7 +3,7 @@ import unittest
 
 from Modules.content_analyzer import analyze_content_rule_based, Issue
 from Modules.ai_optimizer import optimize_content_rule_based
-from sample_data import BAD_BRAND_CONTENT, GOOD_BRAND_CONTENT
+from Data.sample_data import BAD_BRAND_CONTENT, GOOD_BRAND_CONTENT
 
 
 class TestContentAnalyzerAndOptimizer(unittest.TestCase):

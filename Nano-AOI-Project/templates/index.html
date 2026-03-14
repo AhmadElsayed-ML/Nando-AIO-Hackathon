@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nando AIO — Brand AI-Readiness Optimizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #08080c;
+      --bg2: #0f0f14;
+      --surface: rgba(255,255,255,0.045);
+      --surface-hover: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.18);
+      --text: #f0f0f5;
+      --muted: rgba(240,240,245,0.5);
+      --accent: #7ee8fa;
+      --accent2: #c084fc;
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --radius: 14px;
+      --sidebar-w: 260px;
+      --sidebar-collapsed-w: 64px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NOISE GRAIN ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* ── AURORA ── */
+    .aurora { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .aurora-blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.5; animation: blob-drift 18s ease-in-out infinite alternate; }
+    .aurora-blob:nth-child(1) { width:700px;height:600px;top:-200px;left:-100px;background:radial-gradient(ellipse,rgba(160,60,220,0.6),transparent 70%);animation-duration:20s; }
+    .aurora-blob:nth-child(2) { width:600px;height:500px;top:-150px;right:-50px;background:radial-gradient(ellipse,rgba(255,80,120,0.45),transparent 70%);animation-duration:25s;animation-direction:alternate-reverse; }
+    .aurora-blob:nth-child(3) { width:500px;height:500px;bottom:10%;left:10%;background:radial-gradient(ellipse,rgba(20,180,220,0.35),transparent 70%);animation-duration:22s; }
+    @keyframes blob-drift { 0%{transform:translate(0,0) scale(1);}100%{transform:translate(40px,30px) scale(1.1);} }
+
+    /* ── LAYOUT ── */
+    .layout {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      min-height: 100vh;
+      transition: grid-template-columns 0.3s ease;
+    }
+    .layout.collapsed { grid-template-columns: var(--sidebar-collapsed-w) 1fr; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: rgba(8,8,12,0.75);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--border);
+      padding: 28px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      transition: padding 0.3s ease;
+    }
+
+    /* Sidebar top row: logo + toggle */
+    .sidebar-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 32px;
+      gap: 8px;
+    }
+    /* When collapsed, center the toggle button */
+    .layout.collapsed .sidebar-top { justify-content: center; }
+
+    .sidebar-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: -0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+      max-width: 180px;
+      transition: opacity 0.2s, max-width 0.3s;
+    }
+    .sidebar-logo span { color: var(--accent); }
+    .layout.collapsed .sidebar-logo { opacity: 0; max-width: 0; }
+
+    .sidebar-tagline {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-style: italic;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: opacity 0.2s;
+    }
+    .layout.collapsed .sidebar-tagline { opacity: 0; height: 0; margin: 0; }
+
+    /* Toggle button */
+    .sidebar-toggle {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 6px 8px;
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: background 0.2s, color 0.2s;
+      line-height: 1;
+    }
+    .sidebar-toggle:hover { background: var(--surface-hover); color: var(--text); }
+
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: opacity 0.2s;
+    }
+    .layout.collapsed .sidebar-divider { opacity: 0; }
+
+    .nav-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: opacity 0.2s;
+    }
+    .layout.collapsed .nav-label { opacity: 0; }
+
+    .nav-items { display: flex; flex-direction: column; gap: 4px; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    /* Collapsed: center icon */
+    .layout.collapsed .nav-item { justify-content: center; padding: 10px; gap: 0; }
+    .nav-item:hover { background: var(--surface); color: var(--text); }
+    .nav-item.active { background: var(--surface-hover); color: var(--text); }
+
+    .nav-icon { font-size: 1.1rem; flex-shrink: 0; width: 22px; text-align: center; }
+    .nav-text { overflow: hidden; max-width: 150px; transition: opacity 0.2s, max-width 0.3s; white-space: nowrap; }
+    .layout.collapsed .nav-text { opacity: 0; max-width: 0; }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .nav-item.active .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .layout.collapsed .dot { opacity: 0; width: 0; }
+
+    /* ── PAGES ── */
+    .page { display: none; }
+    .page.active { display: block; animation: fadeUp 0.35s ease both; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;} }
+
+    /* ── MAIN ── */
+    .main {
+      padding: 48px 56px;
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── HERO BANNER ── */
+    .hero-banner {
+      text-align: center;
+      padding: 48px 32px 40px;
+      margin-bottom: 36px;
+      position: relative;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(126,232,250,0.08);
+      border: 1px solid rgba(126,232,250,0.2);
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 0.72rem;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+    .hero-title .highlight { color: var(--accent); }
+    .hero-desc {
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 560px;
+      margin: 0 auto 28px;
+    }
+    .hero-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .hero-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .hero-step .step-icon {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem;
+    }
+    .hero-arrow { color: var(--border); font-size: 0.75rem; }
+
+    /* ── PAGE HEADER ── */
+    .page-header { margin-bottom: 32px; }
+    .page-title { font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;letter-spacing:-0.04em;margin-bottom:10px;line-height:1.1; }
+    .page-subtitle { font-size:0.9rem;color:var(--muted);line-height:1.6; }
+
+    /* ── CARDS ── */
+    .card { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px 32px;margin-bottom:20px;transition:border-color 0.3s; }
+    .card:hover { border-color:rgba(255,255,255,0.12); }
+    .card-title { font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:18px;letter-spacing:-0.02em; }
+
+    /* ── FORM ── */
+    .form-row { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px; }
+    .form-group { display:flex;flex-direction:column;gap:7px; }
+    .form-label { font-size:0.78rem;color:var(--muted);letter-spacing:0.02em; }
+
+    input[type="text"], textarea, select {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+      width: 100%;
+    }
+    input[type="text"]::placeholder, textarea::placeholder { color: var(--muted); }
+    input[type="text"]:focus, textarea:focus, select:focus { border-color:var(--accent);background:rgba(126,232,250,0.03); }
+    textarea { min-height:180px;line-height:1.6;resize:vertical; }
+    select option { background: #1a1a2e; }
+
+    .helper-text { font-size:0.78rem;color:var(--muted);line-height:1.55; }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      background: linear-gradient(135deg,rgba(126,232,250,0.15),rgba(192,132,252,0.15));
+      border: 1px solid rgba(126,232,250,0.3);
+      color: var(--text); padding: 13px 32px; border-radius: 999px;
+      font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700;
+      letter-spacing: -0.01em; cursor: pointer; transition: all 0.25s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { background:linear-gradient(135deg,rgba(126,232,250,0.25),rgba(192,132,252,0.25));border-color:rgba(126,232,250,0.6);transform:translateY(-1px);box-shadow:0 8px 30px rgba(126,232,250,0.15); }
+    .btn-primary:disabled { opacity:0.5;cursor:not-allowed;transform:none; }
+
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--muted); padding: 8px 16px; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.8rem; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); }
+
+    .btn-danger {
+      background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2);
+      color: #f87171; padding: 8px 16px; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.8rem; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-danger:hover { background: rgba(248,113,113,0.15); }
+
+    /* ── LOADER ── */
+    .loader { display:none;align-items:center;gap:10px;font-size:0.85rem;color:var(--muted);margin-top:16px; }
+    .loader.visible { display:flex; }
+    .loader-dots span { display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);animation:dot-pulse 1.2s ease-in-out infinite; }
+    .loader-dots span:nth-child(2){animation-delay:0.2s;} .loader-dots span:nth-child(3){animation-delay:0.4s;}
+    @keyframes dot-pulse { 0%,80%,100%{transform:scale(0.6);opacity:0.4;}40%{transform:scale(1);opacity:1;} }
+
+    /* ── RESULTS ── */
+    #results { display:none; }
+    #results.visible { display:block;animation:fadeUp 0.5s ease both; }
+
+    /* ── TABS ── */
+    .tabs { display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:0; }
+    .tab-btn { padding:10px 20px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.875rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s; }
+    .tab-btn:hover { color:var(--text); }
+    .tab-btn.active { color:var(--text);border-bottom-color:var(--accent); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block;animation:fadeUp 0.3s ease both; }
+
+    /* ── COMPARE ── */
+    .compare-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+    .compare-box { background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:20px; }
+    .compare-box.after { border-color:rgba(74,222,128,0.2);background:rgba(74,222,128,0.03); }
+    .compare-label { font-size:0.7rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:12px; }
+    .compare-box.after .compare-label { color:var(--success); }
+    .compare-content { font-size:0.85rem;line-height:1.7;color:var(--text);white-space:pre-wrap; }
+
+    /* ── METRICS ── */
+    .metrics-row { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px; }
+    .metric-box { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;text-align:center; }
+    .metric-value { font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-0.04em; }
+    .metric-value.positive { color:var(--success); }
+    .metric-label { font-size:0.72rem;color:var(--muted);margin-top:4px; }
+
+    /* ── SCORE BARS ── */
+    .score-bar-wrap { margin-bottom:8px; }
+    .score-bar-label { display:flex;justify-content:space-between;font-size:0.78rem;color:var(--muted);margin-bottom:6px; }
+    .score-bar-track { height:6px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden; }
+    .score-bar-fill { height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width 1s ease; }
+
+    /* ── ISSUES ── */
+    .issues-list { display:flex;flex-direction:column;gap:10px; }
+    .issue-item { background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:14px 18px; }
+    .issue-type { display:inline-block;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;padding:3px 8px;border-radius:4px;background:rgba(251,191,36,0.12);color:var(--warning);margin-bottom:8px; }
+    .issue-msg { font-size:0.85rem;line-height:1.5;margin-bottom:6px; }
+    .issue-suggestion { font-size:0.78rem;color:var(--muted); }
+
+    /* ── COPY BTN ── */
+    .copy-btn { margin-top:14px;padding:8px 18px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.78rem;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif; }
+    .copy-btn:hover { border-color:var(--accent);color:var(--accent); }
+
+    /* ── BANNERS ── */
+    .success-banner { display:none;align-items:center;gap:10px;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:10px;padding:12px 18px;font-size:0.85rem;color:var(--success);margin-bottom:20px; }
+    .success-banner.visible { display:flex; }
+    .error-banner { display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:12px 18px;font-size:0.85rem;color:#f87171;margin-top:12px; }
+    .error-banner.visible { display:block; }
+
+    /* ── SETTINGS PAGE ── */
+    .settings-group { margin-bottom: 28px; }
+    .settings-group-title { font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px; }
+
+    .setting-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+    .setting-info { flex: 1; }
+    .setting-label { font-size:0.9rem;font-weight:500;margin-bottom:3px; }
+    .setting-desc { font-size:0.78rem;color:var(--muted); }
+
+    /* Toggle switch */
+    .switch { position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0; }
+    .switch input { opacity:0;width:0;height:0; }
+    .switch-slider {
+      position:absolute;inset:0;background:rgba(255,255,255,0.1);border-radius:24px;
+      cursor:pointer;transition:background 0.2s;border:1px solid var(--border);
+    }
+    .switch-slider::before { content:'';position:absolute;width:18px;height:18px;left:2px;bottom:2px;background:#fff;border-radius:50%;transition:transform 0.2s;opacity:0.7; }
+    .switch input:checked + .switch-slider { background:rgba(126,232,250,0.3);border-color:var(--accent); }
+    .switch input:checked + .switch-slider::before { transform:translateX(20px);opacity:1; }
+
+    /* ── HISTORY PAGE ── */
+    .history-empty { text-align:center;padding:60px 20px;color:var(--muted);font-size:0.9rem; }
+    .history-empty .empty-icon { font-size:2.5rem;margin-bottom:16px;opacity:0.4; }
+
+    .history-list { display:flex;flex-direction:column;gap:10px; }
+    .history-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 22px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .history-item:hover { border-color: var(--border-hover); background: var(--surface-hover); }
+    .history-item-content { flex: 1; min-width: 0; }
+    .history-item-text { font-size:0.875rem;line-height:1.5;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px; }
+    .history-item-meta { display:flex;gap:12px;align-items:center; }
+    .history-item-time { font-size:0.72rem;color:var(--muted); }
+    .history-item-score {
+      font-size:0.7rem;padding:2px 8px;border-radius:999px;
+      background:rgba(74,222,128,0.1);color:var(--success);border:1px solid rgba(74,222,128,0.2);
+    }
+    .history-item-del { background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:4px;border-radius:6px;transition:color 0.2s,background 0.2s;flex-shrink:0; }
+    .history-item-del:hover { color:#f87171;background:rgba(248,113,113,0.1); }
+
+    .history-actions { display:flex;justify-content:flex-end;margin-bottom:16px; }
+  </style>
+</head>
+<body>
+
+<div class="aurora">
+  <div class="aurora-blob"></div>
+  <div class="aurora-blob"></div>
+  <div class="aurora-blob"></div>
+</div>
+
+<div class="layout" id="layout">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div>
+        <div class="sidebar-logo">Nando <span>AIO</span></div>
+      </div>
+      <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
+    </div>
+
+    <div class="sidebar-tagline">Brand AI-Readiness Optimizer</div>
+    <div class="sidebar-divider"></div>
+
+    <nav>
+      <div class="nav-label">Navigation</div>
+      <div class="nav-items">
+        <button class="nav-item active" onclick="navigateTo('dashboard', this)">
+          <div class="dot"></div>
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">Dashboard</span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('settings', this)">
+          <div class="dot"></div>
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-text">Settings</span>
+        </button>
+        <button class="nav-item" onclick="navigateTo('history', this)">
+          <div class="dot"></div>
+          <span class="nav-icon">📜</span>
+          <span class="nav-text">History</span>
+        </button>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <!-- ════════════════════════════════
+         DASHBOARD PAGE
+    ════════════════════════════════ -->
+    <div class="page active" id="page-dashboard">
+
+      <!-- Hero banner -->
+      <div class="hero-banner">
+        <div class="hero-badge">✦ AI-Powered Tool</div>
+        <h1 class="hero-title">Make Your Brand <span class="highlight">AI-Ready</span></h1>
+        <p class="hero-desc">
+          AI agents misread messy, vague brand content every day. Paste your website or social text below — we'll analyze it, rewrite it into a clear structured format, and prove the improvement with before vs. after scores.
+        </p>
+        <div class="hero-steps">
+          <div class="hero-step"><div class="step-icon">📋</div> Paste content</div>
+          <div class="hero-arrow">→</div>
+          <div class="hero-step"><div class="step-icon">🔍</div> We analyze it</div>
+          <div class="hero-arrow">→</div>
+          <div class="hero-step"><div class="step-icon">✨</div> Get AI-ready version</div>
+          <div class="hero-arrow">→</div>
+          <div class="hero-step"><div class="step-icon">📊</div> See the proof</div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="card">
+        <div class="card-title">1. Paste your brand content</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Website or social URL (optional)</label>
+            <input type="text" id="url-input" placeholder="https://example.com or https://twitter.com/brand" />
+          </div>
+          <div class="form-group" style="justify-content:flex-end;">
+            <p class="helper-text">Paste homepage copy, a product description, or social bio. In demo mode, the Jumping Fish Cat Toy example is used for consistent results.</p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Brand content</label>
+          <textarea id="brand-text" placeholder="Example (messy): Our jumping fish cat toy is kinda like this fun thing that moves around when you plug some USB stuff in or sometimes you can maybe use a battery..."></textarea>
+        </div>
+      </div>
+
+      <!-- Analyze -->
+      <div class="card" style="padding:22px 32px;">
+        <div class="card-title">2. Analyze &amp; optimize</div>
+        <button class="btn-primary" id="analyze-btn" onclick="runAnalysis()">
+          <span>✦</span> Analyze &amp; Optimize
+        </button>
+        <div class="loader" id="loader">
+          <div class="loader-dots"><span></span><span></span><span></span></div>
+          AI is restructuring your brand voice...
+        </div>
+        <div class="error-banner" id="error-banner"></div>
+      </div>
+
+      <!-- Results -->
+      <div id="results">
+        <div class="success-banner visible" id="success-banner">
+          ✓ Done! Your brand content has been optimized for AI.
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" onclick="setTab('result', this)">✨ Result</button>
+          <button class="tab-btn" onclick="setTab('data', this)">📊 Data Proof</button>
+          <button class="tab-btn" onclick="setTab('issues', this)">🔍 Issues</button>
+        </div>
+
+        <!-- Result tab -->
+        <div class="tab-panel active" id="tab-result">
+          <div class="card">
+            <div class="card-title">AI-Ready Brand Copy</div>
+            <p style="font-size:0.85rem;color:var(--muted);margin-bottom:18px;">A clean, structured version of your message — tuned for how AI systems parse and reason about brands.</p>
+            <div id="simple-result" style="display:none;">
+              <div class="compare-box after">
+                <div class="compare-label">✓ Optimized</div>
+                <div class="compare-content" id="optimized-text"></div>
+              </div>
+              <button class="copy-btn" onclick="copyText('optimized-text')">Copy to clipboard</button>
+            </div>
+            <div id="expert-result">
+              <div class="compare-grid">
+                <div class="compare-box">
+                  <div class="compare-label">Original content</div>
+                  <div class="compare-content" id="original-text"></div>
+                </div>
+                <div class="compare-box after">
+                  <div class="compare-label">✓ AI-ready content</div>
+                  <div class="compare-content" id="optimized-text-expert"></div>
+                </div>
+              </div>
+              <button class="copy-btn" onclick="copyText('optimized-text-expert')">Copy to clipboard</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data proof tab -->
+        <div class="tab-panel" id="tab-data">
+          <div class="card">
+            <div class="card-title">Clarity &amp; AI-Readiness Scores</div>
+            <div class="metrics-row">
+              <div class="metric-box">
+                <div class="metric-value" id="score-before">—</div>
+                <div class="metric-label">Clarity score (before)</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-value positive" id="score-after">—</div>
+                <div class="metric-label">Clarity score (after)</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-value positive" id="score-delta">—</div>
+                <div class="metric-label">Improvement</div>
+              </div>
+            </div>
+            <div class="score-bar-wrap" style="margin-top:8px;">
+              <div class="score-bar-label"><span>Before</span><span id="bar-before-val">0</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" id="bar-before" style="width:0%;background:rgba(251,191,36,0.7)"></div></div>
+            </div>
+            <div class="score-bar-wrap" style="margin-bottom:24px;">
+              <div class="score-bar-label"><span>After</span><span id="bar-after-val">0</span></div>
+              <div class="score-bar-track"><div class="score-bar-fill" id="bar-after" style="width:0%"></div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div>
+                <p style="font-size:0.78rem;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.1em;">What AI got wrong before</p>
+                <ul id="misunderstandings" style="font-size:0.85rem;line-height:1.7;color:var(--text);padding-left:16px;"></ul>
+              </div>
+              <div>
+                <p style="font-size:0.78rem;color:var(--success);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.1em;">What AI gets right after</p>
+                <ul id="understanding" style="font-size:0.85rem;line-height:1.7;color:var(--text);padding-left:16px;"></ul>
+              </div>
+            </div>
+            <div id="explanation-box" style="margin-top:18px;padding:14px 18px;background:rgba(126,232,250,0.05);border:1px solid rgba(126,232,250,0.15);border-radius:10px;font-size:0.85rem;color:var(--muted);display:none;"></div>
+          </div>
+        </div>
+
+        <!-- Issues tab -->
+        <div class="tab-panel" id="tab-issues">
+          <div class="card">
+            <div class="card-title">Issues Found in Original Content</div>
+            <div class="issues-list" id="issues-list"></div>
+          </div>
+          <div class="card" style="margin-top:16px;">
+            <div class="card-title">Why the AI-ready version is better</div>
+            <ul style="font-size:0.875rem;line-height:1.9;color:var(--muted);padding-left:18px;">
+              <li><strong style="color:var(--text)">Removed vague adjectives</strong> — replaces fuzzy phrases with concrete product details.</li>
+              <li><strong style="color:var(--text)">Added structured metadata</strong> — organizes content into clear sections AI can parse.</li>
+              <li><strong style="color:var(--text)">Clarified target audience</strong> — makes it obvious who the product is for and why it matters.</li>
+              <li><strong style="color:var(--text)">Standardized technical specs</strong> — exposes power, usage, and safety info in a predictable format.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div><!-- /results -->
+    </div><!-- /dashboard -->
+
+
+    <!-- ════════════════════════════════
+         SETTINGS PAGE
+    ════════════════════════════════ -->
+    <div class="page" id="page-settings">
+      <div class="page-header">
+        <h1 class="page-title">Settings</h1>
+        <p class="page-subtitle">Customize how the optimizer works and looks.</p>
+      </div>
+
+      <!-- Analysis settings -->
+      <div class="settings-group">
+        <div class="settings-group-title">Analysis</div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Default view mode</div>
+            <div class="setting-desc">Choose between a quick summary or detailed expert breakdown.</div>
+          </div>
+          <select id="setting-view-mode" onchange="applySettings()" style="width:160px;">
+            <option value="expert">Expert Analysis</option>
+            <option value="simple">Simple View</option>
+          </select>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Developer mode (use mock pipeline)</div>
+            <div class="setting-desc">Always use the Jumping Fish Cat Toy mock data for a consistent demo.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-mock" checked onchange="applySettings()" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Auto-scroll to results</div>
+            <div class="setting-desc">Automatically scroll down after analysis completes.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-autoscroll" checked onchange="applySettings()" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- History settings -->
+      <div class="settings-group">
+        <div class="settings-group-title">History</div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Save history</div>
+            <div class="setting-desc">Store previous prompts and results during this session.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-save-history" checked onchange="applySettings()" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Max history entries</div>
+            <div class="setting-desc">How many past analyses to keep.</div>
+          </div>
+          <select id="setting-history-max" onchange="applySettings()" style="width:100px;">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Display settings -->
+      <div class="settings-group">
+        <div class="settings-group-title">Display</div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <div class="setting-label">Sidebar collapsed by default</div>
+            <div class="setting-desc">Start with the sidebar minimized.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="setting-sidebar-collapsed" onchange="applySettings()" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+      </div>
+
+    </div><!-- /settings -->
+
+
+    <!-- ════════════════════════════════
+         HISTORY PAGE
+    ════════════════════════════════ -->
+    <div class="page" id="page-history">
+      <div class="page-header">
+        <h1 class="page-title">History</h1>
+        <p class="page-subtitle">Your previous analyses from this session.</p>
+      </div>
+
+      <div class="history-actions">
+        <button class="btn-danger" onclick="clearHistory()">🗑 Clear all history</button>
+      </div>
+
+      <div id="history-container">
+        <div class="history-empty">
+          <div class="empty-icon">📜</div>
+          No history yet. Run an analysis to see it here.
+        </div>
+      </div>
+    </div><!-- /history -->
+
+  </main>
+</div><!-- /layout -->
+
+<script>
+  // ── STATE ──
+  let currentMode = 'expert';
+  let history = [];
+  let settings = {
+    viewMode: 'expert',
+    useMock: true,
+    autoScroll: true,
+    saveHistory: true,
+    historyMax: 25,
+    sidebarCollapsed: false,
+  };
+
+  // ── SIDEBAR ──
+  function toggleSidebar() {
+    const layout = document.getElementById('layout');
+    layout.classList.toggle('collapsed');
+    settings.sidebarCollapsed = layout.classList.contains('collapsed');
+  }
+
+  // ── NAVIGATION ──
+  function navigateTo(page, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (page === 'history') renderHistory();
+  }
+
+  // ── VIEW MODE ──
+  function setViewMode(mode) {
+    currentMode = mode;
+    document.getElementById('btn-simple').classList.toggle('active', mode === 'simple');
+    document.getElementById('btn-expert').classList.toggle('active', mode === 'expert');
+    document.getElementById('simple-result').style.display = mode === 'simple' ? 'block' : 'none';
+    document.getElementById('expert-result').style.display = mode === 'expert' ? 'block' : 'none';
+  }
+
+  // ── TABS ──
+  function setTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  // ── COPY ──
+  function copyText(id) {
+    const text = document.getElementById(id).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = event.target;
+      const orig = btn.textContent;
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = orig, 1800);
+    });
+  }
+
+  // ── SETTINGS ──
+  function applySettings() {
+    settings.viewMode = document.getElementById('setting-view-mode').value;
+    settings.useMock = document.getElementById('setting-mock').checked;
+    settings.autoScroll = document.getElementById('setting-autoscroll').checked;
+    settings.saveHistory = document.getElementById('setting-save-history').checked;
+    settings.historyMax = parseInt(document.getElementById('setting-history-max').value);
+    const collapsePref = document.getElementById('setting-sidebar-collapsed').checked;
+    const layout = document.getElementById('layout');
+    if (collapsePref) layout.classList.add('collapsed');
+    else layout.classList.remove('collapsed');
+    currentMode = settings.viewMode;
+  }
+
+  // ── ANALYSIS ──
+  async function runAnalysis() {
+    const text = document.getElementById('brand-text').value.trim();
+    const url = document.getElementById('url-input').value.trim();
+    const errorBanner = document.getElementById('error-banner');
+    const loader = document.getElementById('loader');
+    const btn = document.getElementById('analyze-btn');
+    const results = document.getElementById('results');
+
+    errorBanner.classList.remove('visible');
+
+    if (!text && !url) {
+      errorBanner.textContent = 'Please paste some brand content first.';
+      errorBanner.classList.add('visible');
+      return;
+    }
+
+    btn.disabled = true;
+    loader.classList.add('visible');
+    results.classList.remove('visible');
+
+    try {
+      const response = await fetch('/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, url, mode: currentMode, use_mock: settings.useMock })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Something went wrong.');
+
+      populateResults(data, text);
+      results.classList.add('visible');
+
+      // Save to history
+      if (settings.saveHistory) {
+        addToHistory(text || url, data);
+      }
+
+      // Auto-scroll
+      if (settings.autoScroll) {
+        setTimeout(() => results.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+      }
+
+      // Reset to first tab
+      document.querySelectorAll('.tab-btn')[0].click();
+
+    } catch (err) {
+      errorBanner.textContent = err.message;
+      errorBanner.classList.add('visible');
+    } finally {
+      btn.disabled = false;
+      loader.classList.remove('visible');
+    }
+  }
+
+  // ── POPULATE RESULTS ──
+  function populateResults(data, originalInput) {
+    const optimized = data.optimized || '';
+    const original = data.original || originalInput || '';
+    const metrics = data.metrics || {};
+
+    document.getElementById('optimized-text').textContent = optimized;
+    document.getElementById('original-text').textContent = original;
+    document.getElementById('optimized-text-expert').textContent = optimized;
+
+    document.getElementById('simple-result').style.display = currentMode === 'simple' ? 'block' : 'none';
+    document.getElementById('expert-result').style.display = currentMode === 'expert' ? 'block' : 'none';
+
+    const before = metrics.clarity_before ?? '—';
+    const after = metrics.clarity_after ?? '—';
+    const delta = metrics.clarity_improvement ?? '—';
+
+    document.getElementById('score-before').textContent = before;
+    document.getElementById('score-after').textContent = after;
+    document.getElementById('score-delta').textContent = typeof delta === 'number' ? '+' + delta + ' pts' : delta;
+
+    setTimeout(() => {
+      if (typeof before === 'number') {
+        document.getElementById('bar-before').style.width = before + '%';
+        document.getElementById('bar-before-val').textContent = before;
+      }
+      if (typeof after === 'number') {
+        document.getElementById('bar-after').style.width = after + '%';
+        document.getElementById('bar-after-val').textContent = after;
+      }
+    }, 100);
+
+    document.getElementById('misunderstandings').innerHTML = (metrics.misunderstandings_before || []).map(i => `<li>${i}</li>`).join('');
+    document.getElementById('understanding').innerHTML = (metrics.understanding_after || []).map(i => `<li>${i}</li>`).join('');
+
+    const expBox = document.getElementById('explanation-box');
+    if (metrics.explanation) { expBox.textContent = metrics.explanation; expBox.style.display = 'block'; }
+
+    const issues = (data.analysis_before?.issues || []);
+    const issuesList = document.getElementById('issues-list');
+    if (issues.length === 0) {
+      issuesList.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No issues detected.</p>';
+    } else {
+      issuesList.innerHTML = issues.map(issue => `
+        <div class="issue-item">
+          <span class="issue-type">${issue.type || 'issue'}</span>
+          <div class="issue-msg">${issue.message || ''}</div>
+          ${issue.excerpt ? `<div class="issue-suggestion">Excerpt: <code style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px;">${issue.excerpt}</code></div>` : ''}
+          ${issue.suggestion ? `<div class="issue-suggestion" style="margin-top:4px;">💡 ${issue.suggestion}</div>` : ''}
+        </div>
+      `).join('');
+    }
+  }
+
+  // ── HISTORY ──
+  function addToHistory(inputText, data) {
+    const entry = {
+      id: Date.now(),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      date: new Date().toLocaleDateString(),
+      preview: inputText.slice(0, 120),
+      scoreBefore: data.metrics?.clarity_before,
+      scoreAfter: data.metrics?.clarity_after,
+      improvement: data.metrics?.clarity_improvement,
+      data: data,
+      input: inputText,
+    };
+    history.unshift(entry);
+    if (history.length > settings.historyMax) history = history.slice(0, settings.historyMax);
+  }
+
+  function renderHistory() {
+    const container = document.getElementById('history-container');
+    if (history.length === 0) {
+      container.innerHTML = `
+        <div class="history-empty">
+          <div class="empty-icon">📜</div>
+          No history yet. Run an analysis to see it here.
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = `<div class="history-list">${history.map(entry => `
+      <div class="history-item" onclick="loadFromHistory(${entry.id})">
+        <div class="history-item-content">
+          <div class="history-item-text">${escapeHtml(entry.preview)}${entry.preview.length >= 120 ? '…' : ''}</div>
+          <div class="history-item-meta">
+            <span class="history-item-time">${entry.date} at ${entry.timestamp}</span>
+            ${entry.improvement ? `<span class="history-item-score">+${entry.improvement} pts</span>` : ''}
+          </div>
+        </div>
+        <button class="history-item-del" onclick="deleteHistory(event, ${entry.id})" title="Delete">✕</button>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  function loadFromHistory(id) {
+    const entry = history.find(h => h.id === id);
+    if (!entry) return;
+    // Go to dashboard and load the result
+    navigateTo('dashboard', document.querySelector('.nav-item'));
+    document.getElementById('brand-text').value = entry.input;
+    populateResults(entry.data, entry.input);
+    document.getElementById('results').classList.add('visible');
+    document.querySelectorAll('.tab-btn')[0].click();
+    if (settings.autoScroll) {
+      setTimeout(() => document.getElementById('results').scrollIntoView({ behavior: 'smooth' }), 200);
+    }
+  }
+
+  function deleteHistory(event, id) {
+    event.stopPropagation();
+    history = history.filter(h => h.id !== id);
+    renderHistory();
+  }
+
+  function clearHistory() {
+    if (confirm('Clear all history?')) {
+      history = [];
+      renderHistory();
+    }
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── INIT ──
+  // Start collapsed by default
+  document.getElementById('layout').classList.add('collapsed');
+  document.getElementById('setting-sidebar-collapsed').checked = true;
+  currentMode = settings.viewMode;
+</script>
+</body>
+</html>
